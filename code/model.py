@@ -43,14 +43,6 @@ class CharCNN(nn.Module):
             nn.Linear(1024, 12)
         )
 
-        # self.fc = nn.Sequential(  # fully connected layers
-        #     nn.Linear(512 * self.k, 2048),
-        #     nn.ReLU(),
-        #     nn.Linear(2048, 2048),
-        #     nn.ReLU(),
-        #     nn.Linear(2048, 15)
-        # )
-
         self.softmax = nn.Softmax()
 
 
