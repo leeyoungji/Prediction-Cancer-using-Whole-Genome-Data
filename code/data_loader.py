@@ -82,11 +82,4 @@ if __name__ == '__main__':
     for i_batch, sample_batched in enumerate(train_loader):
         if i_batch == 0:
             print(sample_batched[0][0][0].shape)
-        
-        # print(sample_batched)
-        # len(i_batch)
-        # print(sample_batched['label'].size())
-        # inputs = sample_batched['data']
-        # print(inputs.size())
-        # print('type(target): ', target)
-        
+    
