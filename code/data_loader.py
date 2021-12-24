@@ -1,11 +1,9 @@
-#!/usr/bin/env python3
 from torch.utils.data import DataLoader, Dataset
-import torch.autograd as autograd
 import torch
 import json
 import csv
 
-class AGNEWs(Dataset):
+class WGDs(Dataset):
     def __init__(self, label_data_path, alphabet_path, l0 = 44900):
         """Create AG's News dataset object.
 
@@ -16,15 +14,12 @@ class AGNEWs(Dataset):
         """
         self.label_data_path = label_data_path
         self.l0 = l0
-        # read alphabet
         self.loadAlphabet(alphabet_path)
         self.load(label_data_path)
-        
-            
+
     def __len__(self):
         print(len(self.label))
         return len(self.label)
-
 
     def __getitem__(self, idx):
         X = self.oneHotEncode(idx)
@@ -40,7 +35,6 @@ class AGNEWs(Dataset):
         self.data = []
         with open(label_data_path, 'r') as f:
             rdr = csv.reader(f, delimiter=',', quotechar='"')
-            # num_samples = sum(1 for row in rdr)
             for index, row in enumerate(rdr):
                 self.label.append(int(row[0]))
                 txt = ' '.join(row[1:])
@@ -52,7 +46,6 @@ class AGNEWs(Dataset):
         print('max : ', max(len(w) for w in self.data))
 
     def oneHotEncode(self, idx):
-        # X = (batch, 70, sequence_length)
         X = torch.zeros(len(self.alphabet), self.l0)
         sequence = self.data[idx]
         for index_char, char in enumerate(sequence[::-1]):
@@ -72,14 +65,13 @@ class AGNEWs(Dataset):
 
 if __name__ == '__main__':
     
-    label_data_path = 'data_/ag_news_csv/val_set12.csv'
+    label_data_path = 'data_/csv/val_set12.csv'
     alphabet_path = 'alphabet.json'
 
-    train_dataset = AGNEWs(label_data_path, alphabet_path)
+    train_dataset = WGDs(label_data_path, alphabet_path)
     train_loader = DataLoader(train_dataset, batch_size=8, num_workers=4, drop_last=False)
 
     # size = 0
     for i_batch, sample_batched in enumerate(train_loader):
         if i_batch == 0:
             print(sample_batched[0][0][0].shape)
-    
