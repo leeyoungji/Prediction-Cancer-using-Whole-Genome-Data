@@ -5,7 +5,7 @@ import datetime
 import sys
 import errno
 from model import CharCNN
-from data_loader import AGNEWs
+from data_loader import WGDs
 from torch.utils.data import DataLoader
 import torch
 from torch import nn
@@ -16,7 +16,7 @@ from metric import print_f_score
 parser = argparse.ArgumentParser(description='Character level CNN text classifier testing', formatter_class=argparse.RawTextHelpFormatter)
 # model
 # CharCNN_epoch_102.pth
-parser.add_argument('--model-path', default='./models_CharCNN/CharCNN_best.pth.tar', help='Path to pre-trained acouctics model created by DeepSpeech training')
+parser.add_argument('--model-path', default='./models_CharCNN_/CharCNN_best.pth.tar', help='Path to pre-trained acouctics model created by DeepSpeech training')
 # parser.add_argument('--model-path', default='./models_CharCNN/CharCNN_epoch_94.pth.tar', help='Path to pre-trained acouctics model created by DeepSpeech training')
 
 parser.add_argument('--dropout', type=float, default=0.5, help='the probability for dropout [default: 0.5]')
@@ -24,8 +24,8 @@ parser.add_argument('--l0', type=int, default=44900, help='maximum length of inp
 parser.add_argument('--kernel-num', type=int, default=100, help='number of each kind of kernel')
 parser.add_argument('--kernel-sizes', type=str, default='3,4,5', help='comma-separated kernel size to use for convolution')
 # data
-parser.add_argument('--test-path', metavar='data_/ag_news_csv/test_set12.csv',
-                    help='path to testing data csv', default='data_/ag_news_csv/test_set12.csv')
+parser.add_argument('--test-path', metavar='data_/csv/test_set12.csv',
+                    help='path to testing data csv', default='data_/csv/test_set12.csv')
 parser.add_argument('--batch-size', type=int, default=8, help='batch size for training [default: 128]')
 parser.add_argument('--alphabet-path', default='alphabet.json', help='Contains all characters for prediction')
 # device
@@ -39,10 +39,8 @@ ab=[]
 ba=[]
 if __name__ == '__main__':
 
-#youngji! if) batchsize=1 nope, drop_last=True ->drop_last=false
-    # load testing data
     print("\nLoading testing data...")
-    test_dataset = AGNEWs(label_data_path=args.test_path, alphabet_path=args.alphabet_path)
+    test_dataset = WGDs(label_data_path=args.test_path, alphabet_path=args.alphabet_path)
     print("Transferring testing data to iterator...")
     test_loader = DataLoader(test_dataset, batch_size=args.batch_size, num_workers=args.num_workers, drop_last=True)
 
@@ -84,24 +82,18 @@ if __name__ == '__main__':
         a = logit.tolist()
         ab.append(a)
 
-
-
         predicates = torch.max(logit, 1)[1].view(target.size()).data
         b = predicates.tolist()
-        # print('a : ', a)
         ab.append(b)
         c = target.tolist()
-        # print('a : ', a)
 
         ab.append(c)
-        print(ab)
+        # print(ab)
 
         accumulated_loss += F.nll_loss(logit, target, size_average=False).data
         corrects += (torch.max(logit, 1)[1].view(target.size()).data == target.data).sum()
         predicates_all+=predicates.cpu().numpy().tolist()
-        # print(predicates_all)
         target_all+=target.data.cpu().numpy().tolist()
-        # print(target_all)
     avg_loss = accumulated_loss/size
     accuracy = 100.0 * float(corrects)/float(size)
 
