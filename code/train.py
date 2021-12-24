@@ -1,34 +1,28 @@
-#!/usr/bin/env python3
 from metric import print_f_score
-import matplotlib.pyplot as plt
-from data_loader import AGNEWs
+from data_loader import WGDs
 from model import CharCNN
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
 import torch.nn.functional as F
 from torch import optim
-from torch import nn
 import argparse
-import datetime
 import errno
 import torch
-import sys
 import os
-import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser(description='Character level CNN text classifier training')
-# data 
+# data
 parser.add_argument('--train_path', metavar='DIR',
-                    help='path to training data csv [default: data_/ag_news_csv/train_set12.csv]',
-                    default='data_/ag_news_csv/train_set12.csv')
+                    help='path to training data csv [default: data_/csv/train_set12.csv]',
+                    default='data_/csv/train_set12.csv')
 parser.add_argument('--val_path', metavar='DIR',
-                    help='path to validation data csv [default: data_/ag_news_csv/val_set12.csv]',
-                    default='data_/ag_news_csv/val_set12.csv')
+                    help='path to validation data csv [default: data_/csv/val_set12.csv]',
+                    default='data_/csv/val_set12.csv')
 # learning
 learn = parser.add_argument_group('Learning options')
 learn.add_argument('--lr', type=float, default=0.0001, help='initial learning rate [default: 0.0001]')  # or 0.00009
 learn.add_argument('--epochs', type=int, default=150, help='number of epochs for train [default: 100]')
-learn.add_argument('--batch_size', type=int, default=8, help='batch size for training [default: 64]')
+learn.add_argument('--batch_size', type=int, default=8, help='batch size for training [default: 8]')
 learn.add_argument('--max_norm', default=400, type=int, help='Norm cutoff to prevent explosion of gradients')
 learn.add_argument('--optimizer', default='Adam', help='Type of optimizer. SGD|Adam|ASGD are supported [default: Adam]')
 learn.add_argument('--class_weight', default=None, action='store_true',
@@ -38,7 +32,7 @@ learn.add_argument('--milestones', nargs='+', type=int, default=[5, 10, 15],
                    help=' List of epoch indices. Must be increasing. Default:[5,10,15]')
 learn.add_argument('--decay_factor', default=0.5, type=float,
                    help='Decay factor for reducing learning rate [default: 0.5]')
-# model (text classifier)
+# model
 cnn = parser.add_argument_group('Model options')
 cnn.add_argument('--alphabet_path', default='alphabet.json', help='Contains all characters for prediction')
 cnn.add_argument('--l0', type=int, default=44900, help='maximum length of input sequence to CNNs [default: 1014]')
@@ -104,18 +98,13 @@ def train(train_loader, dev_loader, model, args):
     if args.dynamic_lr and args.optimizer != 'Adam':
         scheduler = optim.lr_scheduler.MultiStepLR(optimizer, milestones=args.milestones, gamma=args.decay_factor,
                                                    last_epoch=-1)
-        # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.5, patience=10, threshold=1e-3)
-
     # multi-gpu
     if args.cuda:
         model = torch.nn.DataParallel(model).cuda()
-    #         model = model.cuda()
 
     model.train()
 
     for epoch in range(start_epoch, args.epochs + 1):
-        # accs=[]
-        # losss=[]
         if args.dynamic_lr and args.optimizer != 'Adam':
             scheduler.step()
         for i_batch, data in enumerate(train_loader, start=start_iter):
@@ -147,8 +136,6 @@ def train(train_loader, dev_loader, model, args):
             if i_batch % args.log_interval == 0:
                 corrects = (torch.max(logit, 1)[1].view(target.size()).data == target.data).sum()
                 accuracy = 100.0 * float(corrects) / float(args.batch_size)
-                # accs.append(accuracy)
-                # losss.append(loss.data)
 
                 print('Epoch[{}] Batch[{}] - loss: {:.6f}  lr: {:.5f}  acc: {:.3f}% ({}/{})'.format(epoch,
                                                                                                     i_batch,
@@ -163,9 +150,6 @@ def train(train_loader, dev_loader, model, args):
             if i_batch % args.val_interval == 0:
                 val_loss, val_acc = eval(dev_loader, model, epoch, i_batch, optimizer, args)
 
-            # plt.plot(accs, label='Training Loss')
-            # plt.plot(losss, label='test/validation loss')
-            # plt.legend()
 
             i_batch += 1
         if args.checkpoint and epoch % args.save_interval == 0:
@@ -248,7 +232,7 @@ def save_checkpoint(model, state, filename):
 
 def make_data_loader(dataset_path, alphabet_path, l0, batch_size, num_workers):
     print("\nLoading data from {}".format(dataset_path))
-    dataset = AGNEWs(label_data_path=dataset_path, alphabet_path=alphabet_path, l0=l0)
+    dataset = WGDs(label_data_path=dataset_path, alphabet_path=alphabet_path, l0=l0)
     dataset_loader = DataLoader(dataset, batch_size=batch_size, num_workers=num_workers, drop_last=True, shuffle=True)
     return dataset, dataset_loader
 
@@ -291,7 +275,6 @@ def main():
             print('Directory already exists.')
         else:
             raise
-    # args.save_folder = os.path.join(args.save_folder, datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
 
     # configuration
     print("\nConfiguration:")
