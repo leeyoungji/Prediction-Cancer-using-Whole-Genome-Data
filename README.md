@@ -1,4 +1,4 @@
-# A Study on the Prediction of Association between Whole Genome Data and Cancer using Deep Learning
+# A Study on the Prediction of Cancer using Whole Genome Data and Deep Learning
 predicting cancer by using the entire genome data of an individual and deep learning
 
 ## Dependencies
